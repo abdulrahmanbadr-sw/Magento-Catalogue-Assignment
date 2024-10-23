@@ -1,0 +1,49 @@
+# Magento generated files
+/app/etc/env.php
+/app/etc/config.php
+/var/*
+/pub/media/*
+/pub/static/*
+/generated/*
+/vendor/*
+/node_modules/*
+/composer.lock
+/.idea
+/.vscode
+/.DS_Store
+
+# Ignore log files and databases
+*.log
+*.sql
+*.sqlite
+
+# Ignore OS generated files
+Thumbs.db
+.DS_Store
+
+# Ignore IDE specific files
+.idea/
+.vscode/
+
+# Ignore Composer vendor directory
+/vendor/
+
+# Ignore NPM node_modules directory
+/node_modules/
+
+# Ignore Magento cache and session files
+/var/cache/
+/var/page_cache/
+/var/session/
+/var/view_preprocessed/
+
+# Ignore static content
+/pub/static/*
+!/pub/static/.htaccess
+
+# Ignore media files
+/pub/media/*
+!/pub/media/.htaccess
+
+# Ignore generated code
+/generated/*
