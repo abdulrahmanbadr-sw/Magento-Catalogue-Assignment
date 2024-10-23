@@ -15,6 +15,9 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\Patch\DataPatchInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\InventoryApi\Api\Data\SourceItemInterface;
+use Magento\InventoryApi\Api\Data\SourceItemInterfaceFactory;
+use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 
 /**
  * Class SimpleProduct
@@ -53,6 +56,21 @@ class SimpleProduct implements DataPatchInterface
     protected EavSetup $eavSetup;
 
     /**
+     * @var SourceItemInterfaceFactory
+     */
+    protected SourceItemInterfaceFactory $sourceItemFactory;
+
+    /**
+     * @var SourceItemsSaveInterface
+     */
+    protected SourceItemsSaveInterface $sourceItemsSaveInterface;
+    
+    /**
+     * @var SourceItemsSaveInterface[] Array of source items.
+     */
+    protected array $sourceItems = [];
+
+    /**
      * SimpleProduct constructor.
      *
      * @param ProductInterfaceFactory $productFactory
@@ -61,6 +79,8 @@ class SimpleProduct implements DataPatchInterface
      * @param StoreManagerInterface $storeManager
      * @param State $appState
      * @param EavSetup $eavSetup
+     * @param SourceItemsSaveInterface $sourceItemsSaveInterface
+     * @param SourceItemInterfaceFactory $sourceItemFactory
      */
     public function __construct(
         ProductInterfaceFactory $productFactory,
@@ -68,7 +88,9 @@ class SimpleProduct implements DataPatchInterface
         CategoryLinkManagementInterface $categoryLinkManagement,
         StoreManagerInterface $storeManager,
         State $appState,
-        EavSetup $eavSetup
+        EavSetup $eavSetup,
+        SourceItemsSaveInterface $sourceItemsSaveInterface,
+        SourceItemInterfaceFactory $sourceItemFactory
     ) {
         $this->productFactory = $productFactory;
         $this->productRepository = $productRepository;
@@ -76,6 +98,8 @@ class SimpleProduct implements DataPatchInterface
         $this->storeManager = $storeManager;
         $this->appState = $appState;
         $this->eavSetup = $eavSetup;
+        $this->sourceItemsSaveInterface = $sourceItemsSaveInterface;
+        $this->sourceItemFactory = $sourceItemFactory;
     }
 
     /**
@@ -95,16 +119,14 @@ class SimpleProduct implements DataPatchInterface
      */
     public function execute(): void
     {
-        string $sku = 'simple-product-sku';
-
-        string $name = 'simple-product-name';
+        $sku = 'simple-product-sku';
+        $name = 'simple-product-name';
+        $product = $this->productFactory->create();
 
         // Check if the product already exists
         if ($product->getIdBySku($sku)) {
             return;
         }
-
-        $product = $this->productFactory->create();
 
         // Get the attribute set id from EavSetup object
         $attributeSetId = $this->eavSetup->getAttributeSetId(Product::ENTITY, 'Default');
@@ -129,20 +151,13 @@ class SimpleProduct implements DataPatchInterface
         $this->productRepository->save($product);
 
         $sourceItem = $this->sourceItemFactory->create();
-
         $sourceItem->setSourceCode('default');
-
         $sourceItem->setQuantity(100);
-
         $sourceItem->setSku($product->getSku());
-
         $sourceItem->setStatus(SourceItemInterface::STATUS_IN_STOCK);
-
         $this->sourceItems[] = $sourceItem;
-
         $this->sourceItemsSaveInterface->execute($this->sourceItems);
         
-
         $categoryIds = [2]; 
 
         $this->categoryLinkManagement->assignProductToCategories($product->getSku(), $categoryIds);
